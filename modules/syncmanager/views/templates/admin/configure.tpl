@@ -9,29 +9,26 @@
 			<th>Contacts créés</th>
 			<th>Contacts mis à jours</th>
 		</tr>
-		<tr>
-			<td>Succès</td>
-			<td>20/08/2016 à 20h05</td>
-			<td>15</td>
-			<td>20</td>
-			<td>5</td>
-			<td>2</td>
-		</tr>
-		<tr>
-			<td>Succès</td>
-			<td>20/08/2016 à 20h05</td>
-			<td>15</td>
-			<td>20</td>
-			<td>5</td>
-			<td>2</td>
-		</tr>
-		<tr>
-			<td>Succès</td>
-			<td>20/08/2016 à 20h05</td>
-			<td>15</td>
-			<td>20</td>
-			<td>5</td>
-			<td>2</td>
-		</tr>
+		{foreach from=$lastSyncs item=sync}
+			<tr>
+				<td>
+					{if $sync->state == 'DONE'}
+						
+							<span class="label label-success">Succès</span>
+					{elseif $sync->state == 'FAIL'}
+							<span class="label label-danger">Erreur</span>
+					{elseif $sync->state == 'PEND'}
+							<span class="label label-warning">En cours</span>
+					{else}
+							<span class="label label-default">Non défini</span>
+					{/if}
+				</td>
+				<td>{$sync->date|date_format:"%d/%m/%Y %H:%I:%S"}</td>
+				<td>0</td>
+				<td>0</td>
+				<td>0</td>
+				<td>0</td>
+			</tr>
+		{/foreach}
 	</table>
 </div>

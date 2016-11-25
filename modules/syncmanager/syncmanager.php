@@ -3,6 +3,9 @@
 if (!defined('_PS_VERSION_'))
   exit;
 
+$class_folder = dirname(__FILE__).'/classes/';
+require_once($class_folder.'/Entity/Synchronization.php');
+
 /**
 * 
 */
@@ -73,7 +76,16 @@ class SyncManager extends Module
 
 		$this->context->smarty->assign('module_dir', $this->_path);
 
+		$lastSyncs = array();
+		$result = Db::getInstance()->executeS('SELECT id FROM '._DB_PREFIX_.'synchronizations ORDER BY date DESC LIMIT 10');
+		foreach ($result as $aSync) {
+			$lastSyncs[] = new Synchronization($aSync['id']);
+		}
+
+		$this->context->smarty->assign('lastSyncs', $lastSyncs);
+
 		$output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
+
 
 		return $output.$this->renderForm();
 	}
@@ -84,12 +96,12 @@ class SyncManager extends Module
                 'form' => array(
                         'id_form' => 'sync_manager_form',
                         'input' => array(
-                        	// array(
-                        	// 	'type'=>'text',
-                        	// 	'label'=>'test',
-                        	// 	'name'=>'txtWarning',
-                        	// 	'is_bool'=>false,
-                        	// ),
+                        	array(
+                        		'type'=>'label',
+                        		'label'=>'Lancer la synchronisation manuellement',
+                        		'name'=>'txtWarning',
+                        		'is_bool'=>false,
+                        	),
                         ),
                         'submit' => array(
                                 'title' => $this->l('Start synchronization'),
@@ -147,7 +159,9 @@ class SyncManager extends Module
 	*/
 	protected function _postProcess()
 	{
-		
+		if (Tools::isSubmit('proceedSync')){
+
+		}
 	}
 
 }
