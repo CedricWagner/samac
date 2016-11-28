@@ -10,6 +10,8 @@ class Synchronization extends ObjectModel
 	public $method;
 	public $state;
 
+	public $__prodAdd;
+	public $__prodEdit;
 
 	public static $definition = array(
 		'table' => 'synchronizations',
@@ -21,6 +23,19 @@ class Synchronization extends ObjectModel
 			'state' => 				array('type' => self::TYPE_STRING, 'required' => false, 'size' => 10),
 		),
 	);
+
+	public static function getLastSynchronizations($nb=10){
+		$lastSyncs = array();
+		$result = Db::getInstance()->executeS('SELECT id FROM '._DB_PREFIX_.'synchronizations ORDER BY date DESC LIMIT '.$nb);
+		foreach ($result as $aSync) {
+			$sync = new Synchronization($aSync['id']);
+			$sync->__prodAdd = SyncProduct::getCountBySynchronization($aSync['id'],SyncProduct::ACTION_ADD);
+			$sync->__prodEdit = SyncProduct::getCountBySynchronization($aSync['id'],SyncProduct::ACTION_EDIT);
+			$lastSyncs[] = $sync;
+		}
+
+		return $lastSyncs;
+	}
 
 }
 

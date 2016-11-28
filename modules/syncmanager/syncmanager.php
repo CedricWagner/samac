@@ -4,7 +4,10 @@ if (!defined('_PS_VERSION_'))
   exit;
 
 $class_folder = dirname(__FILE__).'/classes/';
+require_once($class_folder.'/Interface/iSynchronizable.php');
 require_once($class_folder.'/Entity/Synchronization.php');
+require_once($class_folder.'/Entity/Synchronizable.php');
+require_once($class_folder.'/Entity/SyncProduct.php');
 
 /**
 * 
@@ -73,15 +76,9 @@ class SyncManager extends Module
 		*/
 		$this->_postProcess();
 
-
 		$this->context->smarty->assign('module_dir', $this->_path);
 
-		$lastSyncs = array();
-		$result = Db::getInstance()->executeS('SELECT id FROM '._DB_PREFIX_.'synchronizations ORDER BY date DESC LIMIT 10');
-		foreach ($result as $aSync) {
-			$lastSyncs[] = new Synchronization($aSync['id']);
-		}
-
+		$lastSyncs = Synchronization::getLastSynchronizations();
 		$this->context->smarty->assign('lastSyncs', $lastSyncs);
 
 		$output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');

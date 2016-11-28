@@ -13,19 +13,18 @@
 			<tr>
 				<td>
 					{if $sync->state == 'DONE'}
-						
-							<span class="label label-success">Succès</span>
+						<span class="label label-success">Succès</span>
 					{elseif $sync->state == 'FAIL'}
-							<span class="label label-danger">Erreur</span>
+						<span class="label label-danger">Erreur</span>
 					{elseif $sync->state == 'PEND'}
-							<span class="label label-warning">En cours</span>
+						<span class="label label-warning">En cours</span>
 					{else}
-							<span class="label label-default">Non défini</span>
+						<span class="label label-default">Non défini</span>
 					{/if}
 				</td>
 				<td>{$sync->date|date_format:"%d/%m/%Y %H:%I:%S"}</td>
-				<td>0</td>
-				<td>0</td>
+				<td>{$sync->__prodAdd}</td>
+				<td>{$sync->__prodEdit}</td>
 				<td>0</td>
 				<td>0</td>
 			</tr>
