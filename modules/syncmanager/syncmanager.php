@@ -5,9 +5,11 @@ if (!defined('_PS_VERSION_'))
 
 $class_folder = dirname(__FILE__).'/classes/';
 require_once($class_folder.'/Interface/iSynchronizable.php');
+require_once($class_folder.'/Interface/iWaveSoftConnector.php');
 require_once($class_folder.'/Entity/Synchronization.php');
 require_once($class_folder.'/Entity/Synchronizable.php');
 require_once($class_folder.'/Entity/SyncProduct.php');
+require_once($class_folder.'/Entity/TestBddConnector.php');
 
 /**
 * 
@@ -157,7 +159,32 @@ class SyncManager extends Module
 	protected function _postProcess()
 	{
 		if (Tools::isSubmit('proceedSync')){
+			//init db connector
+			$db = new TestBddConnector();
 
+			// create sync
+			$sync = new Synchronization();
+			$dt = new DateTime();
+			$sync->date = $dt->format('Y-m-d H:i:s');
+			$sync->method = 'MANUAL';
+			$sync->state = 'PEND';
+			$sync->save();
+			//get products
+
+			try {
+				$prodLines = $db->getLines('EXT_WEB_ART','ART_DATEUPDATE','2015-11-23');
+				foreach ($prodLines as $pl) {
+					SyncProduct::proceedLineSync($pl,$sync);
+				}
+
+				$sync->state = 'DONE';
+				$sync->save();
+				Logger::addLog('Synchronisation terminée !',1,null,'Synchronization',$sync->id);
+			} catch (Exception $e) {
+				$sync->state = 'FAIL';
+				$sync->save();
+				Logger::addLog('Erreur lors de la synchronisation : '.$e->getMessage(),3,null,'Synchronization',$sync->id);
+			}
 		}
 	}
 

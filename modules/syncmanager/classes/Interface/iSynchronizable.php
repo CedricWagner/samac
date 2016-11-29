@@ -3,6 +3,8 @@
 interface iSynchronizable
 {
 	static function getCountBySynchronization($id,$action=false);
+
+	public static function proceedLineSync($line,$sync);
 }
 
 

@@ -28,37 +28,50 @@ class SyncProduct extends Synchronizable
 		return $row = Db::getInstance()->getValue($sql);
 	}
 
-	public function proceedLineSync($line){
+	public static function proceedLineSync($line,$sync){
 		$table_name = self::$definition['table'];
 
-		//check if product already exists
+		//get last product sync
 		$ws_id = self::getLineValue($line,'ART_ID');
-		$sql = 'SELECT COUNT(id) FROM '._DB_PREFIX_.$table_name.' WHERE ws_id = '.(int)$ws_id;
-		$nb = Db::getInstance()->getValue($sql);
+		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id = '.(int)$ws_id.' ORDER BY ws_date_update DESC';
+		$id = Db::getInstance()->getValue($sql);
+
+		//init object
+		$sp = new SyncProduct();
 		
-		if ($nb >= 1) {
-			$action = self::ACTION_EDIT;
-			$this->proceedAddLine($line);
+		if($id){
+			$sp->action = self::ACTION_EDIT;
+			$lastSyncProduct = new SyncProduct($id);
+			$sp->ps_id = $lastSyncProduct->ps_id;
 		}else{
-			$action = self::ACTION_ADD;
-			$this->proceedEditLine($line);
+			$sp->action = self::ACTION_ADD;
 		}
 
-	}
-
-	public function proceedAddLine($line){
-		$product = new Product();
-		$product->name = self::getLineValue($line,'ART_DESIGNATION');
-		$product->meta_title = self::getLineValue($line,'ART_DESIGNATION');
-		$product->description = self::getLineValue($line,'ART_DESCRIPTION');
-		$product->description_short = self::getLineValue($line,'ART_DESCRIPTION');
-		$product->meta_description = self::getLineValue($line,'ART_DESCRIPTION');
+		//get the product if edit, otherwise create a new product
+		$product = new Product($sp->action==self::ACTION_ADD?null:$sp->ps_id);
+		$product->name[1] = self::getLineValue($line,'ART_DESIGNATION');
+		$product->description[1] = self::getLineValue($line,'ART_DESCRIPTION');
+		$product->description_short[1] = self::getLineValue($line,'ART_DESCRIPTION');
 		$product->reference = self::getLineValue($line,'ART_CODE');
 		$product->weight = self::getLineValue($line,'ART_POI');
 		$product->height = self::getLineValue($line,'ART_HAU');
 		$product->width = self::getLineValue($line,'ART_LAR');
 		$product->depth = self::getLineValue($line,'ART_LON');
-		$product->price = self::getLineValue($line,'ART_PRIXPUB');
+		$product->price = str_replace(',', '.', self::getLineValue($line,'ART_PRIXPUB'));
+		$product->date_add = self::getLineValue($line,'ART_DATEUPDATE');
+		$product->date_upd = self::getLineValue($line,'ART_DATEUPDATE');
+		$product->quantity = self::getLineValue($line,'ART_STK');
+		$product->ecotax = self::getLineValue($line,'ART_ECOPAR');
+
+		$product->modifierWsLinkRewrite();
+
+		if( $product->save() ){
+			$sp->ws_id = $line['ART_ID'];
+			$sp->ps_id = $product->id;
+			$sp->ws_date_update = $line['ART_DATEUPDATE'];
+			$sp->sync_id = $sync->id;
+			$sp->save();
+		}
 
 	}
 
