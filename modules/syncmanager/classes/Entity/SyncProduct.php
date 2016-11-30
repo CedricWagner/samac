@@ -18,6 +18,7 @@ class SyncProduct extends Synchronizable
 		),
 	);
 
+	
 	public static function getCountBySynchronization($id, $action=false){
 		$table_name = self::$definition['table'];
 		$where_clause = '';
@@ -36,7 +37,7 @@ class SyncProduct extends Synchronizable
 		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id = '.(int)$ws_id.' ORDER BY ws_date_update DESC';
 		$id = Db::getInstance()->getValue($sql);
 
-		//init object
+		//init syncProduct
 		$sp = new SyncProduct();
 		
 		if($id){
@@ -66,15 +67,17 @@ class SyncProduct extends Synchronizable
 		$product->modifierWsLinkRewrite();
 
 		if( $product->save() ){
+			//set product stock
+			StockAvailable::setQuantity($product->id, 0, (int) self::getLineValue($line,'ART_STK'));
+			
+			//add syncProduct entry
 			$sp->ws_id = $line['ART_ID'];
 			$sp->ps_id = $product->id;
 			$sp->ws_date_update = $line['ART_DATEUPDATE'];
 			$sp->sync_id = $sync->id;
 			$sp->save();
 		}
-
 	}
-
 }
 
 ?>

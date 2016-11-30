@@ -24,6 +24,13 @@ class TestBddConnector implements iWaveSoftConnector
 		$stmt->execute();
 		return $stmt->fetchAll();
 	}
+
+	public function getDistinctLines($table,$fieldDate,$date,$fields){
+		$sql = "SELECT DISTINCT ".$fields." FROM ".$table." WHERE ".$fieldDate." >= '".$date."'";
+		$stmt = $this->instance->prepare($sql);
+		$stmt->execute();
+		return $stmt->fetchAll();
+	}
 }
 
 ?>

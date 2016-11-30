@@ -9,6 +9,7 @@ require_once($class_folder.'/Interface/iWaveSoftConnector.php');
 require_once($class_folder.'/Entity/Synchronization.php');
 require_once($class_folder.'/Entity/Synchronizable.php');
 require_once($class_folder.'/Entity/SyncProduct.php');
+require_once($class_folder.'/Entity/SyncCategory.php');
 require_once($class_folder.'/Entity/TestBddConnector.php');
 
 /**
@@ -40,13 +41,42 @@ class SyncManager extends Module
 
 	public function install()
 	{
+		// create main sync table
 	    Db::getInstance()->execute('
-	    	CREATE TABLE IF NOT EXISTS synchronizations (
+	    	CREATE TABLE IF NOT EXISTS ps_synchronizations (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  date DATETIME NULL,
 			  method VARCHAR(12) NULL,
 			  state VARCHAR(10) NULL,
 			  PRIMARY KEY(id)
+			);		
+    	');
+
+    	// create sync products
+	    Db::getInstance()->execute('
+			CREATE TABLE ps_sync_products (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ws_id INTEGER UNSIGNED NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_products_FKIndex1(sync_id)
+			);
+    	');
+
+    	// create sync categories
+	    Db::getInstance()->execute('
+			CREATE TABLE ps_sync_categories (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ws_id INTEGER UNSIGNED NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_categories_FKIndex1(sync_id)
 			);		
     	');
 
@@ -171,7 +201,11 @@ class SyncManager extends Module
 			$sync->save();
 			//get products
 
-			try {
+			// try {
+				$catLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE','2015-11-23','FAM_ID, FAM_CODE, FAM_DESIGNATION');
+				foreach ($catLines as $cl) {
+					SyncCategory::proceedLineSync($cl,$sync);
+				}
 				$prodLines = $db->getLines('EXT_WEB_ART','ART_DATEUPDATE','2015-11-23');
 				foreach ($prodLines as $pl) {
 					SyncProduct::proceedLineSync($pl,$sync);
@@ -180,11 +214,11 @@ class SyncManager extends Module
 				$sync->state = 'DONE';
 				$sync->save();
 				Logger::addLog('Synchronisation terminée !',1,null,'Synchronization',$sync->id);
-			} catch (Exception $e) {
-				$sync->state = 'FAIL';
-				$sync->save();
-				Logger::addLog('Erreur lors de la synchronisation : '.$e->getMessage(),3,null,'Synchronization',$sync->id);
-			}
+			// } catch (Exception $e) {
+				// $sync->state = 'FAIL';
+				// $sync->save();
+				// Logger::addLog('Erreur lors de la synchronisation : '.$e->getMessage(),3,null,'Synchronization',$sync->id);
+			// }
 		}
 	}
 
