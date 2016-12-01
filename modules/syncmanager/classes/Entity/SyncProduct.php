@@ -10,7 +10,7 @@ class SyncProduct extends Synchronizable
 		'primary' => 'id',
 		'fields' => array(
 			'id' =>			 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
-			'sync_id' => array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
+			'sync_id' => 			array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_id' => 				array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ps_id' => 				array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_date_update' =>		array('type' => self::TYPE_DATE, 'validate' => 'isDateFormat', 'required' => true),
@@ -63,6 +63,8 @@ class SyncProduct extends Synchronizable
 		$product->date_upd = self::getLineValue($line,'ART_DATEUPDATE');
 		$product->quantity = self::getLineValue($line,'ART_STK');
 		$product->ecotax = self::getLineValue($line,'ART_ECOPAR');
+		$idCategory = DB::getInstance()->getValue('SELECT sc.ps_id FROM '._DB_PREFIX_.'sync_categories sc WHERE sc.ws_id = '.self::getLineValue($line,'FAM_ID').' ORDER BY sc.ws_date_update, sc.sync_id');
+		$product->id_category_default = $idCategory;
 
 		$product->modifierWsLinkRewrite();
 
@@ -70,6 +72,9 @@ class SyncProduct extends Synchronizable
 			//set product stock
 			StockAvailable::setQuantity($product->id, 0, (int) self::getLineValue($line,'ART_STK'));
 			
+			//set the category
+			$product->addToCategories(array($idCategory));
+
 			//add syncProduct entry
 			$sp->ws_id = $line['ART_ID'];
 			$sp->ps_id = $product->id;

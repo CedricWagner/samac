@@ -2,15 +2,15 @@
 /**
 * 
 */
-class SyncCategory extends Synchronizable
+class SyncCustomer extends Synchronizable
 {
 	
 	public static $definition = array(
-		'table' => 'sync_categories',
+		'table' => 'sync_customers',
 		'primary' => 'id',
 		'fields' => array(
 			'id' =>			 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
-			'sync_id' => array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
+			'sync_id' => 			array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_id' => 				array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ps_id' => 				array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_date_update' =>		array('type' => self::TYPE_DATE, 'validate' => 'isDateFormat', 'required' => true),
@@ -30,36 +30,43 @@ class SyncCategory extends Synchronizable
 	}
 
 	public static function proceedLineSync($line,$sync){
+		$datetime = new DateTime();
 		$table_name = self::$definition['table'];
 
-		//get last category sync
-		$ws_id = self::getLineValue($line,'FAM_ID');
+		//get last customer sync
+		$ws_id = self::getLineValue($line,'CON_ID');
 		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id = '.(int)$ws_id.' ORDER BY ws_date_update DESC';
 		$id = Db::getInstance()->getValue($sql);
 
-		//init syncCategory
-		$sc = new SyncCategory();
+		//init SyncCustomer
+		$sc = new SyncCustomer();
 		
 		if($id){
 			$sc->action = self::ACTION_EDIT;
-			$lastSyncCat = new SyncCategory($id);
-			$sc->ps_id = $lastSyncCat->ps_id;
+			$lastSyncComp = new SyncCustomer($id);
+			$sc->ps_id = $lastSyncComp->ps_id;
 		}else{
 			$sc->action = self::ACTION_ADD;
 		}
 
-		//get the category if edit, otherwise create a new category
-		$cat = new Category($sc->action==self::ACTION_ADD?null:$sc->ps_id);
-		$cat->name[1] = self::getLineValue($line,'FAM_DESIGNATION');
-		$cat->link_rewrite[1] = Tools::link_rewrite(self::getLineValue($line,'FAM_DESIGNATION'));
-		$cat->id_parent = Category::getRootCategory()->id;
+		//get the customer if edit, otherwise create a new customer
+		$customer = new Customer($sc->action==self::ACTION_ADD?null:$sc->ps_id);
+		$customer->firstname = self::getLineValue($line,'CON_PRE');
+		$customer->lastname = self::getLineValue($line,'CON_NOM');
+		$customer->email = self::getLineValue($line,'CON_MAIL');
+		$customer->id_gender = self::getLineValue($line,'CON_TYPE')=="Mr"?1:2;
+		if($sc->action==self::ACTION_ADD){
+			$customer->date_add = $datetime->format('Y-m-d H:i:s');
+		}
+		$customer->date_upd = $datetime->format('Y-m-d H:i:s');
 
-		if( $cat->save() ){
+		if( $customer->save() ){
+			//add to group/company
+			$customer->addGroups(array(DB::getInstance()->getValue('SELECT scc.ps_id FROM '._DB_PREFIX_.'sync_customer_companies scc WHERE scc.ws_id = '.self::getLineValue($line,'CLI_ID').' ORDER BY scc.ws_date_update, scc.sync_id')));
 			//add syncProduct entry
-			$sc->ws_id = $line['FAM_ID'];
-			$sc->ps_id = $cat->id;
-			$dt = new DateTime();
-			$sc->ws_date_update = $dt->format('Y-m-d H:i:s');
+			$sc->ws_id = $line['CON_ID'];
+			$sc->ps_id = $customer->id;
+			$sc->ws_date_update = $datetime->format('Y-m-d H:i:s');
 			$sc->sync_id = $sync->id;
 			$sc->save();
 		}

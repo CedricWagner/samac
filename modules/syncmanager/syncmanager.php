@@ -10,6 +10,8 @@ require_once($class_folder.'/Entity/Synchronization.php');
 require_once($class_folder.'/Entity/Synchronizable.php');
 require_once($class_folder.'/Entity/SyncProduct.php');
 require_once($class_folder.'/Entity/SyncCategory.php');
+require_once($class_folder.'/Entity/SyncCompany.php');
+require_once($class_folder.'/Entity/SyncCustomer.php');
 require_once($class_folder.'/Entity/TestBddConnector.php');
 
 /**
@@ -54,7 +56,7 @@ class SyncManager extends Module
 
     	// create sync products
 	    Db::getInstance()->execute('
-			CREATE TABLE ps_sync_products (
+			CREATE TABLE IF NOT EXISTS ps_sync_products (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id INTEGER UNSIGNED NULL,
@@ -68,7 +70,7 @@ class SyncManager extends Module
 
     	// create sync categories
 	    Db::getInstance()->execute('
-			CREATE TABLE ps_sync_categories (
+			CREATE TABLE IF NOT EXISTS ps_sync_categories (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id INTEGER UNSIGNED NULL,
@@ -78,6 +80,34 @@ class SyncManager extends Module
 			  PRIMARY KEY(id),
 			  INDEX sync_categories_FKIndex1(sync_id)
 			);		
+    	');
+
+    	// create sync companies
+	    Db::getInstance()->execute('
+			CREATE TABLE IF NOT EXISTS ps_sync_customer_companies (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_id INTEGER UNSIGNED NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_customer_societies_FKIndex1(sync_id)
+			);
+    	');
+
+    	// create sync companies
+	    Db::getInstance()->execute('
+			CREATE TABLE ps_sync_customers(
+				id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT ,
+				sync_id INTEGER UNSIGNED NOT NULL ,
+				ws_id INTEGER UNSIGNED NULL ,
+				ps_id INTEGER UNSIGNED NULL ,
+				ws_date_update DATETIME NULL ,
+				ACTION VARCHAR( 1 ) NULL ,
+				PRIMARY KEY ( id ) ,
+				INDEX sync_customers_FKIndex1( sync_id )
+			);
     	');
 
 	    if (!parent::install() || !$this->registerHook('dashboardZoneOne')){
@@ -202,13 +232,29 @@ class SyncManager extends Module
 			//get products
 
 			// try {
-				$catLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE','2015-11-23','FAM_ID, FAM_CODE, FAM_DESIGNATION');
+				//get date
+				// --devonly--
+				$dateLastSync = '2015-11-23';
+
+				//categories
+				$catLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync,'FAM_ID, FAM_CODE, FAM_DESIGNATION');
 				foreach ($catLines as $cl) {
 					SyncCategory::proceedLineSync($cl,$sync);
 				}
-				$prodLines = $db->getLines('EXT_WEB_ART','ART_DATEUPDATE','2015-11-23');
+				//products
+				$prodLines = $db->getLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync);
 				foreach ($prodLines as $pl) {
 					SyncProduct::proceedLineSync($pl,$sync);
+				}
+				//companies
+				$compLines = $db->getLines('EXT_WEB_CLI','CLI_DATEUPDATE',$dateLastSync);
+				foreach ($compLines as $compLine) {
+					SyncCompany::proceedLineSync($compLine,$sync);
+				}
+				//contacts
+				$cusLines = $db->getLines('EXT_WEB_CON','CON_DATEUPDATE',$dateLastSync);
+				foreach ($cusLines as $cusLine) {
+					SyncCustomer::proceedLineSync($cusLine,$sync);
 				}
 
 				$sync->state = 'DONE';
