@@ -29,6 +29,16 @@ class SyncCustomer extends Synchronizable
 		return $row = Db::getInstance()->getValue($sql);
 	}
 
+	public static function generatePassword($length = 10) {
+	    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	    $charactersLength = strlen($characters);
+	    $randomString = '';
+	    for ($i = 0; $i < $length; $i++) {
+	        $randomString .= $characters[rand(0, $charactersLength - 1)];
+	    }
+	    return $randomString;
+	}
+
 	public static function proceedLineSync($line,$sync){
 		$datetime = new DateTime();
 		$table_name = self::$definition['table'];
@@ -57,10 +67,20 @@ class SyncCustomer extends Synchronizable
 		$customer->id_gender = self::getLineValue($line,'CON_TYPE')=="Mr"?1:2;
 		if($sc->action==self::ACTION_ADD){
 			$customer->date_add = $datetime->format('Y-m-d H:i:s');
+			$passwd = SyncCustomer::generatePassword();
+			$customer->setWsPasswd($passwd);
 		}
 		$customer->date_upd = $datetime->format('Y-m-d H:i:s');
 
 		if( $customer->save() ){
+			//send email with account information
+			if($sc->action==self::ACTION_ADD){
+				if(!_PS_MODE_DEV_){	
+					Mail::Send((int)Context::getContext()->language->id, 'account', 'Création de votre compte SAMAC',array('{email}'=>$customer->email,'{firstname}'=>$customer->firstname,'{lastname}'=>$customer->lastname,'{passwd}'=>$passwd),'c.wagner@mkdn-groupe.com','Dev','c.wagner@mkdn-groupe.com','SAMAC');
+				}else{
+					Logger::addLog('Nouveau compte créé : '.$customer->email.'/'.$passwd,1,null,'Customer',$customer->id);
+				}
+			}
 			//add to group/company
 			$customer->addGroups(array(DB::getInstance()->getValue('SELECT scc.ps_id FROM '._DB_PREFIX_.'sync_customer_companies scc WHERE scc.ws_id = '.self::getLineValue($line,'CLI_ID').' ORDER BY scc.ws_date_update, scc.sync_id')));
 			//add syncProduct entry

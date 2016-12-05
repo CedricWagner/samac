@@ -1,0 +1,24 @@
+#delivery-date-panel{
+	overflow:hidden;
+}
+
+#ddw_text {
+	display:block;
+	font-weight:bold;
+	margin:10px 0px;
+	padding:3px;
+	background-color:#f1f1f1;
+}
+
+#delivery-date-panel .calendar-wrapper {
+	float:left;
+	margin-right:12px;
+}
+
+#delivery-date-panel #ddw_timeslots {
+	float:left;
+}
+
+#delivery-date-panel #ddw_timeslots div {
+	margin:8px 0px;
+}

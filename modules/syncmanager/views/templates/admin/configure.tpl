@@ -25,8 +25,8 @@
 				<td>{$sync->date|date_format:"%d/%m/%Y %H:%I:%S"}</td>
 				<td>{$sync->__prodAdd}</td>
 				<td>{$sync->__prodEdit}</td>
-				<td>0</td>
-				<td>0</td>
+				<td>{$sync->__custAdd}</td>
+				<td>{$sync->__custEdit}</td>
 			</tr>
 		{/foreach}
 	</table>

@@ -1,0 +1,17 @@
+Hi {firstname} {lastname},
+
+Just a quick email to let you know your order over at {shop_name} will be delivered to you on {delivery_date}
+
+Order: {order_name}
+Placed on : {date}
+Carrier : {carrier}
+
+Delivery address:
+
+{delivery_block_txt}
+
+Billing address:
+
+{invoice_block_txt}
+
+{shop_url}

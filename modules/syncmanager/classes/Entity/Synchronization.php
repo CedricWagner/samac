@@ -12,6 +12,8 @@ class Synchronization extends ObjectModel
 
 	public $__prodAdd;
 	public $__prodEdit;
+	public $__custAdd;
+	public $__custEdit;
 
 	public static $definition = array(
 		'table' => 'synchronizations',
@@ -31,6 +33,8 @@ class Synchronization extends ObjectModel
 			$sync = new Synchronization($aSync['id']);
 			$sync->__prodAdd = SyncProduct::getCountBySynchronization($aSync['id'],SyncProduct::ACTION_ADD);
 			$sync->__prodEdit = SyncProduct::getCountBySynchronization($aSync['id'],SyncProduct::ACTION_EDIT);
+			$sync->__custAdd = SyncCustomer::getCountBySynchronization($aSync['id'],SyncCustomer::ACTION_ADD);
+			$sync->__custEdit = SyncCustomer::getCountBySynchronization($aSync['id'],SyncCustomer::ACTION_EDIT);
 			$lastSyncs[] = $sync;
 		}
 
