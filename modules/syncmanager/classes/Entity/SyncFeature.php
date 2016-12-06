@@ -2,17 +2,19 @@
 /**
 * 
 */
-class SyncCategory extends Synchronizable
+class SyncFeature extends Synchronizable
 {
-	
+	public $ps_id_feature;
+
 	public static $definition = array(
-		'table' => 'sync_categories',
+		'table' => 'sync_features',
 		'primary' => 'id',
 		'fields' => array(
 			'id' =>			 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
 			'sync_id' => 			array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_id' => 				array('type' => self::TYPE_STRING, 'validate' => 'isString', 'required' => true),
 			'ps_id' => 				array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
+			'ps_id_feature' => 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_date_update' =>		array('type' => self::TYPE_DATE, 'validate' => 'isDateFormat', 'required' => true),
 			'action' =>				array('type' => self::TYPE_STRING, 'validate' => 'isString','required' => true),
 		),
@@ -30,38 +32,40 @@ class SyncCategory extends Synchronizable
 	}
 
 	public static function proceedLineSync($line,$sync){
+		$feature = $line['feature'];
 		$table_name = self::$definition['table'];
 
 		//get last category sync
-		$ws_id = self::getLineValue($line,'ART_ASF');
-		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id LIKE "'.$ws_id.'" ORDER BY ws_date_update DESC';
+		$ws_id = self::getLineValue($line,0);
+		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id LIKE "'.$ws_id.'" AND ps_id_feature = '.($feature->id).' ORDER BY ws_date_update DESC';
 		$id = Db::getInstance()->getValue($sql);
 
-		//init syncCategory
-		$sc = new SyncCategory();
+		//init SyncFeature
+		$sf = new SyncFeature();
 		
 		if($id){
-			$sc->action = self::ACTION_EDIT;
-			$lastSyncCat = new SyncCategory($id);
-			$sc->ps_id = $lastSyncCat->ps_id;
+			$sf->action = self::ACTION_EDIT;
+			$lastSyncCat = new SyncFeature($id);
+			$sf->ps_id = $lastSyncCat->ps_id;
 		}else{
-			$sc->action = self::ACTION_ADD;
+			$sf->action = self::ACTION_ADD;
 		}
 
-		//get the category if edit, otherwise create a new category
-		$cat = new Category($sc->action==self::ACTION_ADD?null:$sc->ps_id);
-		$cat->name[1] = self::getLineValue($line,'ART_ASF');
-		$cat->link_rewrite[1] = Tools::link_rewrite(self::getLineValue($line,'ART_ASF'));
-		$cat->id_parent = Category::getRootCategory()->id;
+		//get the feature if edit, otherwise create a new feature
+		$featureValue = new FeatureValue($sf->action==self::ACTION_ADD?null:$sf->ps_id);
+		$featureValue->id_feature = $feature->id;
+		$featureValue->value[1] = self::getLineValue($line,0);
 
-		if( $cat->save() ){
+
+		if( $featureValue->save() ){
 			//add syncProduct entry
-			$sc->ws_id = $line['ART_ASF'];
-			$sc->ps_id = $cat->id;
+			$sf->ws_id = self::getLineValue($line,0);
+			$sf->ps_id = $featureValue->id;
 			$dt = new DateTime();
-			$sc->ws_date_update = $dt->format('Y-m-d H:i:s');
-			$sc->sync_id = $sync->id;
-			$sc->save();
+			$sf->ws_date_update = $dt->format('Y-m-d H:i:s');
+			$sf->sync_id = $sync->id;
+			$sf->ps_id_feature = $feature->id;
+			$sf->save();
 		}
 	}
 }

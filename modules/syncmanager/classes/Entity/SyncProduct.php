@@ -63,7 +63,7 @@ class SyncProduct extends Synchronizable
 		$product->date_upd = self::getLineValue($line,'ART_DATEUPDATE');
 		$product->quantity = self::getLineValue($line,'ART_STK');
 		$product->ecotax = self::getLineValue($line,'ART_ECOPAR');
-		$idCategory = DB::getInstance()->getValue('SELECT sc.ps_id FROM '._DB_PREFIX_.'sync_categories sc WHERE sc.ws_id = '.self::getLineValue($line,'FAM_ID').' ORDER BY sc.ws_date_update, sc.sync_id');
+		$idCategory = DB::getInstance()->getValue('SELECT sc.ps_id FROM '._DB_PREFIX_.'sync_categories sc WHERE sc.ws_id LIKE "'.self::getLineValue($line,'ART_ASF').'" ORDER BY sc.ws_date_update DESC, sc.sync_id DESC');
 		$product->id_category_default = $idCategory;
 
 		$product->modifierWsLinkRewrite();
@@ -74,6 +74,23 @@ class SyncProduct extends Synchronizable
 			
 			//set the category
 			$product->addToCategories(array($idCategory));
+
+			//set feature values
+			$product->deleteFeatures();
+
+			//-- families
+			$fFamille = SyncManager::getFeatureByName('Famille');
+			$product->addFeaturesToDB($fFamille->id,Db::getInstance()->getValue('SELECT sf.ps_id FROM '._DB_PREFIX_.'sync_features sf WHERE sf.ws_id LIKE "'.self::getLineValue($line,'FAM_DESIGNATION').'" AND sf.ps_id_feature = '.($fFamille->id).' ORDER BY sf.ws_date_update DESC, sf.sync_id DESC'));
+			//-- categories
+			$fCategory = SyncManager::getFeatureByName('Catégorie');
+			$product->addFeaturesToDB($fCategory->id,Db::getInstance()->getValue('SELECT sf.ps_id FROM '._DB_PREFIX_.'sync_features sf WHERE sf.ws_id LIKE "'.self::getLineValue($line,'ART_CAT').'" AND sf.ps_id_feature = '.($fCategory->id).' ORDER BY sf.ws_date_update DESC, sf.sync_id DESC'));
+			//-- natures
+			$fNature = SyncManager::getFeatureByName('Nature');
+			$product->addFeaturesToDB($fNature->id,Db::getInstance()->getValue('SELECT sf.ps_id FROM '._DB_PREFIX_.'sync_features sf WHERE sf.ws_id LIKE "'.self::getLineValue($line,'ART_NAT').'" AND sf.ps_id_feature = '.($fNature->id).' ORDER BY sf.ws_date_update DESC, sf.sync_id DESC'));
+			//-- collections
+			$fCol = SyncManager::getFeatureByName('Collection');
+			$product->addFeaturesToDB($fCol->id,Db::getInstance()->getValue('SELECT sf.ps_id FROM '._DB_PREFIX_.'sync_features sf WHERE sf.ws_id LIKE "'.self::getLineValue($line,'ART_COL').'" AND sf.ps_id_feature = '.($fCol->id).' ORDER BY sf.ws_date_update DESC, sf.sync_id DESC'));
+
 
 			//add syncProduct entry
 			$sp->ws_id = $line['ART_ID'];

@@ -10,8 +10,11 @@ require_once($class_folder.'/Entity/Synchronization.php');
 require_once($class_folder.'/Entity/Synchronizable.php');
 require_once($class_folder.'/Entity/SyncProduct.php');
 require_once($class_folder.'/Entity/SyncCategory.php');
+require_once($class_folder.'/Entity/SyncFeature.php');
 require_once($class_folder.'/Entity/SyncCompany.php');
 require_once($class_folder.'/Entity/SyncCustomer.php');
+require_once($class_folder.'/Entity/SyncPrice.php');
+require_once($class_folder.'/Entity/SyncShippingAddress.php');
 require_once($class_folder.'/Entity/TestBddConnector.php');
 
 /**
@@ -73,13 +76,27 @@ class SyncManager extends Module
 			CREATE TABLE IF NOT EXISTS ps_sync_categories (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
-			  ws_id INTEGER UNSIGNED NULL,
+			  ws_id VARCHAR(55) NULL,
 			  ps_id INTEGER UNSIGNED NULL,
 			  ws_date_update DATETIME NULL,
 			  action VARCHAR(1) NULL,
 			  PRIMARY KEY(id),
 			  INDEX sync_categories_FKIndex1(sync_id)
 			);		
+    	');
+
+    	// create sync features
+	    Db::getInstance()->execute('
+			CREATE TABLE ps_sync_features (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ws_id VARCHAR(55) NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_features_FKIndex1(sync_id)
+			);
     	');
 
     	// create sync companies
@@ -107,6 +124,34 @@ class SyncManager extends Module
 				ACTION VARCHAR( 1 ) NULL ,
 				PRIMARY KEY ( id ) ,
 				INDEX sync_customers_FKIndex1( sync_id )
+			);
+    	');
+
+    	// create sync companies
+	    Db::getInstance()->execute('
+			CREATE TABLE ps_sync_prices (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ws_id VARCHAR(12) NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_prices_FKIndex1(sync_id)
+			);
+    	');
+
+    	// create sync shipping adress
+	    Db::getInstance()->execute('
+			CREATE TABLE ps_sync_shipping_adresses (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ws_id VARCHAR(12) NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_adresses_FKIndex1(sync_id)
 			);
     	');
 
@@ -237,9 +282,38 @@ class SyncManager extends Module
 				$dateLastSync = '2015-11-23';
 
 				//categories
-				$catLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync,'FAM_ID, FAM_CODE, FAM_DESIGNATION');
+				$catLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync,'ART_ASF');
 				foreach ($catLines as $cl) {
 					SyncCategory::proceedLineSync($cl,$sync);
+				}
+				//features
+				//--families
+				$featLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync,'FAM_DESIGNATION');
+				$feature = self::getFeatureByName("Famille");
+				foreach ($featLines as $fl) {
+					$fl['feature'] = $feature;
+					SyncFeature::proceedLineSync($fl,$sync);
+				}
+				//--categories
+				$featLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync,'ART_CAT');
+				$feature = self::getFeatureByName("Catégorie");
+				foreach ($featLines as $fl) {
+					$fl['feature'] = $feature;
+					SyncFeature::proceedLineSync($fl,$sync);
+				}
+				//--natures
+				$featLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync,'ART_NAT');
+				$feature = self::getFeatureByName("Nature");
+				foreach ($featLines as $fl) {
+					$fl['feature'] = $feature;
+					SyncFeature::proceedLineSync($fl,$sync);
+				}
+				//--collection
+				$featLines = $db->getDistinctLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync,'ART_COL');
+				$feature = self::getFeatureByName("Collection");
+				foreach ($featLines as $fl) {
+					$fl['feature'] = $feature;
+					SyncFeature::proceedLineSync($fl,$sync);
 				}
 				//products
 				$prodLines = $db->getLines('EXT_WEB_ART','ART_DATEUPDATE',$dateLastSync);
@@ -256,6 +330,21 @@ class SyncManager extends Module
 				foreach ($cusLines as $cusLine) {
 					SyncCustomer::proceedLineSync($cusLine,$sync);
 				}
+				//prices
+				$priceLines = $db->getLines('EXT_WEB_TARIF','ART_DATEUPDATE',$dateLastSync);
+				foreach ($priceLines as $priceLine) {
+					SyncPrice::proceedLineSync($priceLine,$sync);
+				}
+				//shipping addresses
+				$saLines = $db->getLines('EXT_WEB_ADRLIV','ADR_DATEUPDATE',$dateLastSync);
+				foreach ($saLines as $saLine) {
+					SyncShippingAddress::proceedLineSync($saLine,$sync);
+				}
+				//shipping addresses
+				$iaLines = $db->getLines('EXT_WEB_CLI','ADR_DATEUPDATE',$dateLastSync);
+				foreach ($iaLines as $iaLine) {
+					// SyncInvoiceAddress::proceedLineSync($saLine,$sync);
+				}
 
 				$sync->state = 'DONE';
 				$sync->save();
@@ -265,6 +354,19 @@ class SyncManager extends Module
 				// $sync->save();
 				// Logger::addLog('Erreur lors de la synchronisation : '.$e->getMessage(),3,null,'Synchronization',$sync->id);
 			// }
+		}
+	}
+
+	public static function getFeatureByName($name){
+		$id_feature = (Db::getInstance()->getValue('SELECT id_feature FROM ps_feature_lang WHERE name LIKE "'.$name.'" AND id_lang = 1'));
+		if ($id_feature) {
+			$feature = new Feature($id_feature);
+			return $feature;
+		}else{
+			$feature = new Feature();
+			$feature->name[1] = $name;
+			$feature->save();
+			return $feature;
 		}
 	}
 
