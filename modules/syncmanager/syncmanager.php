@@ -15,6 +15,8 @@ require_once($class_folder.'/Entity/SyncCompany.php');
 require_once($class_folder.'/Entity/SyncCustomer.php');
 require_once($class_folder.'/Entity/SyncPrice.php');
 require_once($class_folder.'/Entity/SyncShippingAddress.php');
+require_once($class_folder.'/Entity/SyncInvoiceAddress.php');
+require_once($class_folder.'/Entity/SyncDoc.php');
 require_once($class_folder.'/Entity/TestBddConnector.php');
 
 /**
@@ -87,7 +89,7 @@ class SyncManager extends Module
 
     	// create sync features
 	    Db::getInstance()->execute('
-			CREATE TABLE ps_sync_features (
+			CREATE TABLE  IF NOT EXISTS ps_sync_features (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(55) NULL,
@@ -115,7 +117,7 @@ class SyncManager extends Module
 
     	// create sync companies
 	    Db::getInstance()->execute('
-			CREATE TABLE ps_sync_customers(
+			CREATE TABLE  IF NOT EXISTS ps_sync_customers(
 				id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT ,
 				sync_id INTEGER UNSIGNED NOT NULL ,
 				ws_id INTEGER UNSIGNED NULL ,
@@ -129,7 +131,7 @@ class SyncManager extends Module
 
     	// create sync companies
 	    Db::getInstance()->execute('
-			CREATE TABLE ps_sync_prices (
+			CREATE TABLE  IF NOT EXISTS ps_sync_prices (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(12) NULL,
@@ -143,7 +145,7 @@ class SyncManager extends Module
 
     	// create sync shipping adress
 	    Db::getInstance()->execute('
-			CREATE TABLE ps_sync_shipping_adresses (
+			CREATE TABLE  IF NOT EXISTS ps_sync_shipping_adresses (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(12) NULL,
@@ -152,6 +154,48 @@ class SyncManager extends Module
 			  action VARCHAR(1) NULL,
 			  PRIMARY KEY(id),
 			  INDEX sync_adresses_FKIndex1(sync_id)
+			);
+    	');
+
+    	// create sync shipping adress
+	    Db::getInstance()->execute('
+			CREATE TABLE  IF NOT EXISTS ps_sync_invoice_adresses (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ws_id VARCHAR(12) NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_adresses_FKIndex1(sync_id)
+			);
+    	');
+
+    	// create sync docs (=orders)
+	    Db::getInstance()->execute('
+			CREATE TABLE IF NOT EXISTS ps_sync_documents (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_id VARCHAR(31) NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_documents_FKIndex1(sync_id)
+			);
+    	');
+
+    	// create sync doc lines
+	    Db::getInstance()->execute('
+			CREATE TABLE IF NOT EXISTS ps_sync_document_lines (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_id VARCHAR(15) NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_document_lines_FKIndex1(sync_id)
 			);
     	');
 
@@ -340,10 +384,16 @@ class SyncManager extends Module
 				foreach ($saLines as $saLine) {
 					SyncShippingAddress::proceedLineSync($saLine,$sync);
 				}
-				//shipping addresses
+				//invoice addresses
 				$iaLines = $db->getLines('EXT_WEB_CLI','ADR_DATEUPDATE',$dateLastSync);
 				foreach ($iaLines as $iaLine) {
-					// SyncInvoiceAddress::proceedLineSync($saLine,$sync);
+					SyncInvoiceAddress::proceedLineSync($iaLine,$sync);
+				}
+
+				//invoice addresses
+				$docLines = $db->getLines('EXT_WEB_DOC','DOC_DATEUPDATE',$dateLastSync);
+				foreach ($docLines as $docLine) {
+					SyncDoc::proceedLineSync($docLine,$sync);
 				}
 
 				$sync->state = 'DONE';

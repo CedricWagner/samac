@@ -31,6 +31,13 @@ class TestBddConnector implements iWaveSoftConnector
 		$stmt->execute();
 		return $stmt->fetchAll();
 	}
+
+	public function getDocLines($date){
+		$sql = "SELECT d.*, SUM(ld.LDOC_QTE*ld.LDOC_PRIX) AS TOTAL FROM EXT_WEB_DOC d INNER JOIN EXT_WEB_LDOC ld ON (d.DOC_CODE = ld.DOC_CODE) WHERE d.DOC_DATEUPDATE >= '".$date."' GROUP BY d.DOC_CODE";
+		$stmt = $this->instance->prepare($sql);
+		$stmt->execute();
+		return $stmt->fetchAll();
+	}
 }
 
 ?>

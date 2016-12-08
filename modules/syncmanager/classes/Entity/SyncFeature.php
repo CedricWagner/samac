@@ -6,8 +6,10 @@ class SyncFeature extends Synchronizable
 {
 	public $ps_id_feature;
 
+	const TABLE_NAME= 'sync_features';
+
 	public static $definition = array(
-		'table' => 'sync_features',
+		'table' => self::TABLE_NAME,
 		'primary' => 'id',
 		'fields' => array(
 			'id' =>			 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
@@ -20,24 +22,13 @@ class SyncFeature extends Synchronizable
 		),
 	);
 
-
-	public static function getCountBySynchronization($id, $action=false){
-		$table_name = self::$definition['table'];
-		$where_clause = '';
-		if ($action) {
-			$where_clause = 'AND action LIKE "'.$action.'"';
-		}
-		$sql = 'SELECT COUNT(id) FROM '._DB_PREFIX_.$table_name.' WHERE sync_id = '.$id.' '.$where_clause;
-		return $row = Db::getInstance()->getValue($sql);
-	}
-
 	public static function proceedLineSync($line,$sync){
 		$feature = $line['feature'];
-		$table_name = self::$definition['table'];
+		$table_name = self::TABLE_NAME;
 
 		//get last category sync
 		$ws_id = self::getLineValue($line,0);
-		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id LIKE "'.$ws_id.'" AND ps_id_feature = '.($feature->id).' ORDER BY ws_date_update DESC';
+		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id = "'.$ws_id.'" AND ps_id_feature = '.($feature->id).' ORDER BY ws_date_update DESC';
 		$id = Db::getInstance()->getValue($sql);
 
 		//init SyncFeature

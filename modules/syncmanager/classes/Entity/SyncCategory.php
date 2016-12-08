@@ -4,9 +4,10 @@
 */
 class SyncCategory extends Synchronizable
 {
+	const TABLE_NAME = 'sync_categories';
 	
 	public static $definition = array(
-		'table' => 'sync_categories',
+		'table' => self::TABLE_NAME,
 		'primary' => 'id',
 		'fields' => array(
 			'id' =>			 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
@@ -19,22 +20,11 @@ class SyncCategory extends Synchronizable
 	);
 
 
-	public static function getCountBySynchronization($id, $action=false){
-		$table_name = self::$definition['table'];
-		$where_clause = '';
-		if ($action) {
-			$where_clause = 'AND action LIKE "'.$action.'"';
-		}
-		$sql = 'SELECT COUNT(id) FROM '._DB_PREFIX_.$table_name.' WHERE sync_id = '.$id.' '.$where_clause;
-		return $row = Db::getInstance()->getValue($sql);
-	}
-
 	public static function proceedLineSync($line,$sync){
-		$table_name = self::$definition['table'];
 
 		//get last category sync
 		$ws_id = self::getLineValue($line,'ART_ASF');
-		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id LIKE "'.$ws_id.'" ORDER BY ws_date_update DESC';
+		$sql = 'SELECT id FROM '._DB_PREFIX_.self::TABLE_NAME.' WHERE ws_id = "'.$ws_id.'" ORDER BY ws_date_update DESC';
 		$id = Db::getInstance()->getValue($sql);
 
 		//init syncCategory

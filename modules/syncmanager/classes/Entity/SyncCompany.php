@@ -4,13 +4,14 @@
 */
 class SyncCompany extends Synchronizable
 {
-	
+	const TABLE_NAME = 'sync_customer_companies';
+
 	public static $definition = array(
-		'table' => 'sync_customer_companies',
+		'table' => self::TABLE_NAME,
 		'primary' => 'id',
 		'fields' => array(
 			'id' =>			 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
-			'sync_id' => array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
+			'sync_id' => 			array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_id' => 				array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ps_id' => 				array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'required' => true),
 			'ws_date_update' =>		array('type' => self::TYPE_DATE, 'validate' => 'isDateFormat', 'required' => true),
@@ -18,24 +19,12 @@ class SyncCompany extends Synchronizable
 		),
 	);
 
-
-	public static function getCountBySynchronization($id, $action=false){
-		$table_name = self::$definition['table'];
-		$where_clause = '';
-		if ($action) {
-			$where_clause = 'AND action LIKE "'.$action.'"';
-		}
-		$sql = 'SELECT COUNT(id) FROM '._DB_PREFIX_.$table_name.' WHERE sync_id = '.$id.' '.$where_clause;
-		return $row = Db::getInstance()->getValue($sql);
-	}
-
 	public static function proceedLineSync($line,$sync){
 		$datetime = new DateTime();
-		$table_name = self::$definition['table'];
 
 		//get last company sync
 		$ws_id = self::getLineValue($line,'CLI_ID');
-		$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id = '.(int)$ws_id.' ORDER BY ws_date_update DESC';
+		$sql = 'SELECT id FROM '._DB_PREFIX_.self::TABLE_NAME.' WHERE ws_id = '.(int)$ws_id.' ORDER BY ws_date_update DESC';
 		$id = Db::getInstance()->getValue($sql);
 
 		//init syncCompany

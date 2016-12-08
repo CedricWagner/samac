@@ -4,9 +4,10 @@
 */
 class SyncShippingAddress extends Synchronizable
 {
+	const TABLE_NAME = 'sync_shipping_adresses';
 	
 	public static $definition = array(
-		'table' => 'sync_shipping_adresses',
+		'table' => self::TABLE_NAME,
 		'primary' => 'id',
 		'fields' => array(
 			'id' =>			 		array('type' => self::TYPE_INT, 'validate' => 'isNullOrUnsignedId', 'copy_post' => false),
@@ -18,19 +19,8 @@ class SyncShippingAddress extends Synchronizable
 		),
 	);
 
-
-	public static function getCountBySynchronization($id, $action=false){
-		$table_name = self::$definition['table'];
-		$where_clause = '';
-		if ($action) {
-			$where_clause = 'AND action LIKE "'.$action.'"';
-		}
-		$sql = 'SELECT COUNT(id) FROM '._DB_PREFIX_.$table_name.' WHERE sync_id = '.$id.' '.$where_clause;
-		return $row = Db::getInstance()->getValue($sql);
-	}
-
 	public static function proceedLineSync($line,$sync){
-		$table_name = self::$definition['table'];
+		$table_name = self::TABLE_NAME;
 
 		//get all customers of company
 		$id_group = Db::getInstance()->getValue('SELECT ps_id FROM ps_sync_customer_companies WHERE ws_id = '.self::getLineValue($line,'CLI_ID'));
@@ -40,7 +30,7 @@ class SyncShippingAddress extends Synchronizable
 
 			//get last category sync
 			$ws_id = self::getLineValue($line,'ADR_ID').'-'.$customer['id_customer'];
-			$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id LIKE "'.$ws_id.'" ORDER BY ws_date_update DESC';
+			$sql = 'SELECT id FROM '._DB_PREFIX_.$table_name.' WHERE ws_id = "'.$ws_id.'" ORDER BY ws_date_update DESC';
 			$id = Db::getInstance()->getValue($sql);
 
 			//init SyncShippingAddress
@@ -60,15 +50,19 @@ class SyncShippingAddress extends Synchronizable
 			$address->company = self::getLineValue($line,'ADR_SOCIETE');
 			$address->lastname = $customer['lastname'];
 			$address->firstname = $customer['firstname'];
-			$address->address1 = self::getLineValue($line,'ADR_1');
+			$address->address1 = self::getLineValue($line,'ADR_1')?self::getLineValue($line,'ADR_1'):' ';
 			$address->address2 = self::getLineValue($line,'ADR_2').' '.self::getLineValue($line,'ADR_3');
 			$address->postcode = self::getLineValue($line,'ADR_CP');
-			$address->city = self::getLineValue($line,'ADR_VIL');
+			$address->city = self::getLineValue($line,'ADR_VIL')?self::getLineValue($line,'ADR_VIL'):' ';
 			$address->phone = self::getLineValue($line,'ADR_TEL');
 			$address->phone_mobile = self::getLineValue($line,'ADR_POR');
 			$address->other = self::getLineValue($line,'ADR_INF');	
 			$address->id_customer = $customer['id_customer'];	
-			$country_id = Country::getByIso(substr(self::getLineValue($line,'ADR_PAY'),0,2));
+			if (self::getLineValue($line,'ADR_PAY')) {
+				$country_id = Country::getByIso(substr(self::getLineValue($line,'ADR_PAY'),0,2));
+			}else{
+				$country_id = Country::getByIso('FR');
+			}
 			$address->id_country = $country_id;	
 
 			if( $address->save() ){
