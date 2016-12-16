@@ -1,0 +1,1 @@
+<p>{l s='Dernière synchronisation le'} {$dateLastSync}</p>
