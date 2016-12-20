@@ -1,5 +1,5 @@
 <div class="panel">
-	<h2>Liste des dernières synchronisations</h2>
+	<div class="panel-heading">Liste des dernières synchronisations</div>
 	<table class="table">
 		<tr>
 			<th>État</th>
@@ -22,7 +22,7 @@
 						<span class="label label-default">Non défini</span>
 					{/if}
 				</td>
-				<td>{$sync->date|date_format:"%d/%m/%Y %H:%I:%S"}</td>
+				<td>{$sync->date|date_format:"%d/%m/%Y %H:%M:%S"}</td>
 				<td>{$sync->__prodAdd}</td>
 				<td>{$sync->__prodEdit}</td>
 				<td>{$sync->__custAdd}</td>

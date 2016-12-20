@@ -1,33 +1,37 @@
 <div class="panel">
-	<h2>Liste des dernières synchronisations</h2>
+	<div class="panel-heading">Gestion des notifications</div>
 	<table class="table">
 		<tr>
-			<th>État</th>
 			<th>Date</th>
-			<th>Produits créés</th>
-			<th>Produits mis à jours</th>
-			<th>Contacts créés</th>
-			<th>Contacts mis à jours</th>
+			<th>Cible</th>
+			<th style="width:75%">Contenu</th>
 		</tr>
-		{foreach from=$lastSyncs item=sync}
+		{foreach from=$notifications item=notif}
 			<tr>
+				<td>{$notif->date|date_format:"%d/%m/%Y %H:%M:%S"}</td>
 				<td>
-					{if $sync->state == 'DONE'}
-						<span class="label label-success">Succès</span>
-					{elseif $sync->state == 'FAIL'}
-						<span class="label label-danger">Erreur</span>
-					{elseif $sync->state == 'PEND'}
-						<span class="label label-warning">En cours</span>
+					{if $notif->level == 'C'}
+						Collective
 					{else}
-						<span class="label label-default">Non défini</span>
+						{foreach from=$notif->getTargets() item=target}
+							- {$target->__customer->firstname} {$target->__customer->lastname}<br />		
+						{/foreach}
 					{/if}
 				</td>
-				<td>{$sync->date|date_format:"%d/%m/%Y %H:%I:%S"}</td>
-				<td>{$sync->__prodAdd}</td>
-				<td>{$sync->__prodEdit}</td>
-				<td>{$sync->__custAdd}</td>
-				<td>{$sync->__custEdit}</td>
+				<td>{$notif->content|escape:'html'}</td>
 			</tr>
 		{/foreach}
 	</table>
 </div>
+
+<script type="text/javascript">
+	$(function(){
+		$('.form-group .checkbox').parents('.form-group').hide();
+		$('#target-all').click(function(){
+			$('.form-group .checkbox').parents('.form-group').hide();
+		});
+		$('#target-ind').click(function(){
+			$('.form-group .checkbox').parents('.form-group').show();
+		});
+	});
+</script>

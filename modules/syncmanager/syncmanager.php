@@ -51,7 +51,7 @@ class SyncManager extends Module
 	{
 		// create main sync table
 	    Db::getInstance()->execute('
-	    	CREATE TABLE IF NOT EXISTS ps_synchronizations (
+	    	CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'synchronizations (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  date DATETIME NULL,
 			  method VARCHAR(12) NULL,
@@ -62,7 +62,7 @@ class SyncManager extends Module
 
     	// create sync products
 	    Db::getInstance()->execute('
-			CREATE TABLE IF NOT EXISTS ps_sync_products (
+			CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'sync_products (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id INTEGER UNSIGNED NULL,
@@ -76,7 +76,7 @@ class SyncManager extends Module
 
     	// create sync categories
 	    Db::getInstance()->execute('
-			CREATE TABLE IF NOT EXISTS ps_sync_categories (
+			CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'sync_categories (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(55) NULL,
@@ -90,11 +90,12 @@ class SyncManager extends Module
 
     	// create sync features
 	    Db::getInstance()->execute('
-			CREATE TABLE  IF NOT EXISTS ps_sync_features (
+			CREATE TABLE  IF NOT EXISTS '._DB_PREFIX_.'sync_features (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(55) NULL,
 			  ps_id INTEGER UNSIGNED NULL,
+			  ps_id_feature INTEGER UNSIGNED NULL,
 			  ws_date_update DATETIME NULL,
 			  action VARCHAR(1) NULL,
 			  PRIMARY KEY(id),
@@ -104,7 +105,7 @@ class SyncManager extends Module
 
     	// create sync companies
 	    Db::getInstance()->execute('
-			CREATE TABLE IF NOT EXISTS ps_sync_customer_companies (
+			CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'sync_customer_companies (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ps_id INTEGER UNSIGNED NULL,
@@ -118,7 +119,7 @@ class SyncManager extends Module
 
     	// create sync companies
 	    Db::getInstance()->execute('
-			CREATE TABLE  IF NOT EXISTS ps_sync_customers(
+			CREATE TABLE  IF NOT EXISTS '._DB_PREFIX_.'sync_customers(
 				id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT ,
 				sync_id INTEGER UNSIGNED NOT NULL ,
 				ws_id INTEGER UNSIGNED NULL ,
@@ -132,7 +133,7 @@ class SyncManager extends Module
 
     	// create sync companies
 	    Db::getInstance()->execute('
-			CREATE TABLE  IF NOT EXISTS ps_sync_prices (
+			CREATE TABLE  IF NOT EXISTS '._DB_PREFIX_.'sync_prices (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(12) NULL,
@@ -146,7 +147,7 @@ class SyncManager extends Module
 
     	// create sync shipping adress
 	    Db::getInstance()->execute('
-			CREATE TABLE  IF NOT EXISTS ps_sync_shipping_adresses (
+			CREATE TABLE  IF NOT EXISTS '._DB_PREFIX_.'sync_shipping_adresses (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(12) NULL,
@@ -160,7 +161,7 @@ class SyncManager extends Module
 
     	// create sync shipping adress
 	    Db::getInstance()->execute('
-			CREATE TABLE  IF NOT EXISTS ps_sync_invoice_adresses (
+			CREATE TABLE  IF NOT EXISTS '._DB_PREFIX_.'sync_invoice_adresses (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ws_id VARCHAR(12) NULL,
@@ -174,7 +175,7 @@ class SyncManager extends Module
 
     	// create sync docs (=orders)
 	    Db::getInstance()->execute('
-			CREATE TABLE IF NOT EXISTS ps_sync_documents (
+			CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'sync_documents (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ps_id INTEGER UNSIGNED NULL,
@@ -188,7 +189,7 @@ class SyncManager extends Module
 
     	// create sync doc lines
 	    Db::getInstance()->execute('
-			CREATE TABLE IF NOT EXISTS ps_sync_document_lines (
+			CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'sync_document_lines (
 			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 			  sync_id INTEGER UNSIGNED NOT NULL,
 			  ps_id INTEGER UNSIGNED NULL,
@@ -331,13 +332,8 @@ class SyncManager extends Module
         $fields_form = array(
                 'form' => array(
                         'id_form' => 'sync_manager_form',
-                        'input' => array(
-                        	array(
-                        		'type'=>'label',
-                        		'label'=>'Lancer la synchronisation manuellement',
-                        		'name'=>'txtWarning',
-                        		'is_bool'=>false,
-                        	),
+                        'legend' => array(
+                    		'title'=>'Lancer la synchronisation manuellement',
                         ),
                         'submit' => array(
                                 'title' => $this->l('Start synchronization'),

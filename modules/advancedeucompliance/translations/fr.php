@@ -69,7 +69,7 @@ $_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_98f770b0af18ca7
 $_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_307676a395a3e913b32733a2ddcf1449'] = 'Activer l\'option "Envoyer à un ami"';
 $_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_c57fc80fe284ea2b7fe0e32ee9f56a65'] = 'Assurez-vous d\'être en règle avec la législation de votre pays avant de l\'activer : les e-mails envoyés par cette option peuvent être considérés comme des e-mails commerciaux non désirés.';
 $_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_01fcd16be34de91e8b570c662396e617'] = 'Si cette option est activée, le module "Envoyer à un ami" permet à vos clients d\'envoyer à leurs amis un e-mail avec un lien vers une page produit.';
-$_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_ea6af6c587b95c2434e8e159d5461ac5'] = 'Activer l\'option "Re-commander"';
+$_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_ea6af6c587b95c2434e8e159d5461ac5'] = 'Activer l\'option "Commander à nouveau"';
 $_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_ee856332afbbe0d52192231820caf0f1'] = 'Si cette option est activée, les clients peuvent repasser commande en un clic depuis leur historique de commandes.';
 $_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_1fa508d743a9f464f8b4510257ca492a'] = 'Assurez-vous d\'être en règle avec la législation de votre pays avant de l\'activer : cette option peut être considérée comme de la vente forcée.';
 $_MODULE['<{advancedeucompliance}prestashop>advancedeucompliance_effd118ee85f0eb8f280a083b86e6f98'] = 'Activer la page de commande avancée';

@@ -1,5 +1,6 @@
 <?php
 
+global $_TABS;
 $_TABS = array();
 
 $_TABS['AdminDashboard'] = 'Tableau de bord';

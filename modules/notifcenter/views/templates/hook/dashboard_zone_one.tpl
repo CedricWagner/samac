@@ -1,1 +1,7 @@
-<p>{l s='Dernière synchronisation le'} {$dateLastSync}</p>
+<p>Notifications administrateur :</p>
+<ul>
+	<li>Lorem</li>
+	<li>Ipsum</li>
+	<li>Dolor</li>
+	<li>Sit</li>
+</ul>
