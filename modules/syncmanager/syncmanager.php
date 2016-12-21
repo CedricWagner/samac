@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_'))
 $class_folder = dirname(__FILE__).'/classes/';
 require_once($class_folder.'/Interface/iSynchronizable.php');
 require_once($class_folder.'/Interface/iWaveSoftConnector.php');
+require_once($class_folder.'/Entity/OrderExtra.php');
 require_once($class_folder.'/Entity/Synchronization.php');
 require_once($class_folder.'/Entity/Synchronizable.php');
 require_once($class_folder.'/Entity/SyncProduct.php');
@@ -18,6 +19,7 @@ require_once($class_folder.'/Entity/SyncShippingAddress.php');
 require_once($class_folder.'/Entity/SyncInvoiceAddress.php');
 require_once($class_folder.'/Entity/SyncDoc.php');
 require_once($class_folder.'/Entity/SyncDocLine.php');
+require_once($class_folder.'/Entity/SyncDocExtra.php');
 require_once($class_folder.'/Entity/TestBddConnector.php');
 
 /**
@@ -201,6 +203,36 @@ class SyncManager extends Module
 			);
     	');
 
+    	// create order extra table
+	    Db::getInstance()->execute('
+			CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'order_extra (
+			  id_order_extra INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  id_order INTEGER UNSIGNED NULL,
+			  id_order_detail INTEGER UNSIGNED NULL,
+			  product_quantity INTEGER UNSIGNED NULL,
+			  tracking_code VARCHAR(32) NULL,
+			  ws_num_order VARCHAR(32) NULL,
+			  ws_num_delivery VARCHAR(32) NULL,
+			  ws_num_invoice VARCHAR(32) NULL,
+			  delivery_date DATETIME NULL,
+			  PRIMARY KEY(id_order_extra)
+			);
+    	');
+
+    	// create sync doc extra
+	    Db::getInstance()->execute('
+			CREATE TABLE IF NOT EXISTS '._DB_PREFIX_.'sync_document_extra (
+			  id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+			  sync_id INTEGER UNSIGNED NOT NULL,
+			  ps_id INTEGER UNSIGNED NULL,
+			  ws_id VARCHAR(32) NULL,
+			  ws_date_update DATETIME NULL,
+			  action VARCHAR(1) NULL,
+			  PRIMARY KEY(id),
+			  INDEX sync_document_extra_FKIndex1(sync_id)
+			);
+    	');
+
 	    if(!Configuration::get('ID_STATE_PAYMENT_OK')){
 	    	// create a new payment method : VALIDATE
 		    Db::getInstance()->execute("
@@ -288,7 +320,7 @@ class SyncManager extends Module
 	    	");
 	    }
 
-	    if (!parent::install() || !$this->registerHook('dashboardZoneOne')){
+	    if (!parent::install() || !$this->registerHook('dashboardZoneOne')|| !$this->registerHook('adminOrder')){
 	        return false;
 	    }
 	    return true;
@@ -304,6 +336,14 @@ class SyncManager extends Module
 	    $this->context->smarty->assign(array(
 	        'dateLastSync' => Tools::displayDate('2016-08-12')));
 	    return $this->display(__FILE__, 'dashboard_zone_one.tpl');
+	}
+
+	public function hookAdminOrder($params)
+	{
+		$this->context->smarty->assign('module_dir', $this->_path);
+		$lstOrderExtra = OrderExtra::getByOrderId($params['id_order']);
+		$this->context->smarty->assign('lstOrderExtra', $lstOrderExtra);
+		return $this->context->smarty->fetch($this->local_path.'views/templates/hook/admin_order.tpl');
 	}
 
 	/**
@@ -483,7 +523,21 @@ class SyncManager extends Module
 				foreach ($docLLines as $docLLine) {
 					SyncDocLine::proceedLineSync($docLLine,$sync);
 				}
+				//order extra
+				//getDocExtraLines : specific method that only gets lines from an edited order
+				$docExtraLines = $db->getDocExtraLines();
+				foreach ($docExtraLines as $docExtraLine) {
+					//delete older entries
+					SyncDocExtra::deleteOrderExtra($docExtraLine);
+				}
+				foreach ($docExtraLines as $docExtraLine) {
+					//add new ones
+					SyncDocExtra::proceedLineSync($docExtraLine,$sync);
+				}
+				//notify changes
+				$db->notifyChanges();
 
+				
 				$sync->state = 'DONE';
 				$sync->save();
 				Logger::addLog('Synchronisation terminée !',1,null,'Synchronization',$sync->id);
